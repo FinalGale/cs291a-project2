@@ -45,7 +45,36 @@ export class ApiChatService implements ChatService {
     // 6. Handle non-ok responses by throwing an error with status and message
     // 7. Return the parsed JSON response
 
-    throw new Error('makeRequest method not implemented');
+     try {
+      const token = this.tokenManager.getToken();
+      const defaultHeaders = {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'Content-Type': 'application/json'
+      }
+
+      const mergedOptions: RequestInit = {
+        credentials: 'include',
+        ...options,
+        headers: {
+          ...defaultHeaders,
+          ...options.headers,
+        },
+      };
+
+      const url = `${this.baseUrl}${endpoint}`;
+
+      const response = await fetch(url, mergedOptions);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const response_json = await response.json();
+      return response_json;
+    } catch (error) {
+      console.error('Error with making request', error);
+      throw error;
+    }
   }
 
   // Conversations
@@ -56,8 +85,13 @@ export class ApiChatService implements ChatService {
     // 2. Return the array of conversations
     //
     // See API_SPECIFICATION.md for endpoint details
-
-    throw new Error('getConversations method not implemented');
+    const response = await this.makeRequest< Conversation[] >(
+      '/conversations', 
+      {
+          method: 'GET',
+      }
+    )
+    return response
   }
 
   async getConversation(_id: string): Promise<Conversation> {
@@ -67,8 +101,13 @@ export class ApiChatService implements ChatService {
     // 2. Return the conversation object
     //
     // See API_SPECIFICATION.md for endpoint details
-
-    throw new Error('getConversation method not implemented');
+    const response = await this.makeRequest< Conversation >(
+      `/conversations/:${_id}`, 
+      {
+          method: 'GET',
+      }
+    )
+    return response
   }
 
   async createConversation(
@@ -81,7 +120,16 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('createConversation method not implemented');
+    const response = await this.makeRequest< Conversation >(
+      '/conversations',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          "title": request.title
+        }),
+      }
+    )
+    return response;
   }
 
   async updateConversation(
@@ -108,7 +156,13 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('getMessages method not implemented');
+    const response = await this.makeRequest< Message[] >(
+      `/conversations/${conversationId}/messages`,
+      {
+        method: 'GET',
+      }
+    )
+    return response;
   }
 
   async sendMessage(request: SendMessageRequest): Promise<Message> {
@@ -119,7 +173,17 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('sendMessage method not implemented');
+    const response = await this.makeRequest<Message>(
+      '/messages',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          "conversationId": request.conversationId,
+          "content": request.content
+        }),
+      }
+    )
+    return response;
   }
 
   async markMessageAsRead(messageId: string): Promise<void> {
@@ -137,7 +201,13 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('getExpertQueue method not implemented');
+    const response = await this.makeRequest<ExpertQueue>(
+      '/expert/queue',
+      {
+        method: 'GET',
+      }
+    )
+    return response;
   }
 
   async claimConversation(conversationId: string): Promise<void> {
@@ -148,7 +218,12 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('claimConversation method not implemented');
+    await this.makeRequest(
+      `/expert/conversations/${conversationId}/claim`,
+      {
+        method: 'POST',
+      }
+    )
   }
 
   async unclaimConversation(conversationId: string): Promise<void> {
@@ -159,7 +234,12 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('unclaimConversation method not implemented');
+    await this.makeRequest(
+      `/expert/conversations/${conversationId}/unclaim`,
+      {
+        method: 'POST',
+      }
+    )
   }
 
   async getExpertProfile(): Promise<ExpertProfile> {
@@ -170,7 +250,13 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('getExpertProfile method not implemented');
+    const response = await this.makeRequest<ExpertProfile>(
+      '/expert/profile',
+      {
+        method: 'GET',
+      }
+    )
+    return response;
   }
 
   async updateExpertProfile(
@@ -182,8 +268,17 @@ export class ApiChatService implements ChatService {
     // 2. Return the updated expert profile object
     //
     // See API_SPECIFICATION.md for endpoint details
-
-    throw new Error('updateExpertProfile method not implemented');
+    const response = await this.makeRequest<ExpertProfile>(
+      '/expert/profile',
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          "bio": request.bio,
+          "knowledgeBaseLinks": request.knowledgeBaseLinks
+        }),
+      }
+    )
+    return response;
   }
 
   async getExpertAssignmentHistory(): Promise<ExpertAssignment[]> {
@@ -194,6 +289,12 @@ export class ApiChatService implements ChatService {
     //
     // See API_SPECIFICATION.md for endpoint details
 
-    throw new Error('getExpertAssignmentHistory method not implemented');
+    const response = await this.makeRequest<ExpertAssignment[]>(
+      '/expert/assignments/history',
+      {
+        method: 'GET',
+      }
+    )
+    return response;
   }
 }
